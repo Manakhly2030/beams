@@ -233,6 +233,7 @@ doc_events = {
 # }
 fixtures = [
     {"dt":"Workflow","filters":[["name","in",["Customer Approval", "Account Approval"]]]},
-    {"dt":"Workflow State","filters":[["name","in",["Draft", "Pending Approval", "Approved", "Rejected"]]]},
-    {"dt":"Workflow Action Master","filters":[["name","in",["Submit for Approval", "Approve", "Reject", "Change Request"]]]},
+    {"dt":"Workflow State","filters":[["name","in",["Draft", "Pending Approval", "Approved", "Rejected","Pending Verfication","Verified"]]]},
+    {"dt":"Workflow Action Master","filters":[["name","in",["Submit for Approval", "Approve", "Reject", "Change Request","Sent For Verfication","Verify","Sent For CEO Approval"]]]},
+    {"dt": "Role", "filters": [["name", "in", ["CEO"]]]}
 ]

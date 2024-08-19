@@ -10,11 +10,19 @@
   "home_page": null,
   "is_custom": 0,
   "list_sidebar": 1,
+<<<<<<< HEAD
   "modified": "2024-08-03 14:59:34.007306",
   "name": "Accounts User",
   "notifications": 1,
   "restrict_to_domain": null,
   "role_name": "Accounts User",
+=======
+  "modified": "2024-08-17 15:05:41.498094",
+  "name": "CEO",
+  "notifications": 1,
+  "restrict_to_domain": null,
+  "role_name": "CEO",
+>>>>>>> 315c36a (feat : Workflow of Adhoc Budget doc-type)
   "search_bar": 1,
   "timeline": 1,
   "two_factor_auth": 0,
