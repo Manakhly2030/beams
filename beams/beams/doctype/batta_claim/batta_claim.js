@@ -1,19 +1,144 @@
-
-
 // Copyright (c) 2024, efeone and contributors
 // For license information, please see license.txt
 
 frappe.ui.form.on('Batta Claim', {
     onload: function (frm) {
-        set_batta_based_on_options(frm)
+        set_batta_based_on_options(frm);
         calculate_totals(frm);
+        calculate_batta_totals(frm);
     },
+    room_rent_batta: function(frm) {
+       calculate_batta_totals(frm);
+   },
+   daily_batta_with_overnight_stay: function(frm) {
+       calculate_batta_totals(frm);
+   },
+   daily_batta_without_overnight_stay: function(frm) {
+       calculate_batta_totals(frm);
+   },
+   food_allowance: function(frm) {
+       calculate_batta_totals(frm);
+   },
+    origin: function(frm) {
+        update_work_detail(frm);
+    },
+    destination: function(frm) {
+        update_work_detail(frm);
+    },
+    designation: function(frm) {
+        frm.trigger('calculate_batta');
+    },
+    is_travelling_outside_kerala: function(frm) {
+        frm.trigger('calculate_batta');
+    },
+    is_overnight_stay: function(frm) {
+        frm.trigger('calculate_batta');
+    },
+    total_distance_travelled_km: function(frm) {
+        frm.trigger('calculate_batta');
+    },
+    work_detail_add: function(frm, cdt, cdn) {
+       calculate_total_distance_travelled(frm);
+   },
+    work_detail_onform_render: function(frm, cdt, cdn) {
+      calculate_total_distance_travelled(frm);
+   },
+    work_detail_remove: function(frm, cdt, cdn) {
+       calculate_total_distance_travelled(frm);
+   },
     refresh: function (frm) {
-        set_batta_based_on_options(frm)
+        set_batta_based_on_options(frm);
         calculate_totals(frm);
+        calculate_total_distance_travelled(frm);
+        calculate_batta_totals(frm);
+
+        frappe.call({
+            method: "beams.beams.doctype.batta_claim.batta_claim.get_batta_policy_values",
+            callback: function(response) {
+                if (response.message) {
+                    let is_actual_daily_batta_without_overnight_stay = response.message.is_actual__;
+                    let is_actual_daily_batta_with_overnight_stay = response.message.is_actual_;
+                    let is_actual_room_rent_batta = response.message.is_actual;
+                    let is_actual_food_allowance = response.message.is_actual___;
+
+                    // Set read-only based on conditions
+                    frm.set_df_property('daily_batta_without_overnight_stay', 'read_only', is_actual_daily_batta_without_overnight_stay == 0);
+                    frm.set_df_property('daily_batta_with_overnight_stay', 'read_only', is_actual_daily_batta_with_overnight_stay == 0);
+                    frm.set_df_property('room_rent_batta', 'read_only', is_actual_room_rent_batta == 0);
+                    frm.set_df_property('food_allowance', 'read_only', is_actual_food_allowance == 0);
+
+                    // Refresh the fields to reflect the changes
+                    frm.refresh_field('daily_batta_without_overnight_stay');
+                    frm.refresh_field('daily_batta_with_overnight_stay');
+                    frm.refresh_field('room_rent_batta');
+                    frm.refresh_field('food_allowance');
+                }
+            }
+        });
     },
     batta_type: function(frm) {
-        set_batta_based_on_options(frm)
+        set_batta_based_on_options(frm);
+        frm.doc.work_detail.forEach(function(row) {
+            frappe.model.set_value(row.doctype, row.name, 'batta_type', frm.doc.batta_type);
+        });
+        frm.refresh_field('work_detail');
+        set_batta_based_on_options(frm);
+        handle_designation_based_on_batta_type(frm);
+        frm.set_value('batta', 0);
+    },
+    employee: function (frm) {
+        handle_designation_based_on_batta_type(frm);
+    },
+    batta: function (frm) {
+        // Loop through each row in the work_detail child table to calculate the row values based on the updated batta
+        frm.doc.work_detail.forEach(function(row) {
+            if (frm.doc.batta_based_on === 'Daily') {
+                row.number_of_days = Math.ceil(row.total_hours / 24);
+                row.daily_batta = row.number_of_days * frm.doc.batta;
+            } else if (frm.doc.batta_based_on === 'Hours') {
+                row.daily_batta = (row.total_hours - row.ot_hours) * frm.doc.batta;
+            }
+
+            row.ot_batta = row.ot_hours * frm.doc.ot_batta;
+
+            // Refresh the fields for each row in the child table
+            frm.refresh_field('work_detail');
+        });
+        // After updating all the rows, recalculate the total values
+        calculate_totals(frm);
+    },
+    calculate_batta: function(frm) {
+        // Ensure designation and total distance are filled before calling the function
+        if (frm.doc.designation && frm.doc.total_distance_travelled_km) {
+            // Sum up total_hours from the work_detail child table
+            let total_hours = 0;
+            if (frm.doc.work_detail) {
+                frm.doc.work_detail.forEach(row => {
+                    total_hours += row.total_hours || 0;
+                });
+            }
+
+            frappe.call({
+                method: "beams.beams.doctype.batta_claim.batta_claim.calculate_batta_allowance",
+                args: {
+                    designation: frm.doc.designation,
+                    is_travelling_outside_kerala: frm.doc.is_travelling_outside_kerala,
+                    is_overnight_stay: frm.doc.is_overnight_stay,
+                    total_distance_travelled_km: frm.doc.total_distance_travelled_km,
+                    total_hours: total_hours,
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        // Set batta values in the form
+                        frm.set_value('batta', r.message.batta);
+                        frm.set_value('room_rent_batta', r.message.room_rent_batta);
+                        frm.set_value('daily_batta_with_overnight_stay', r.message.daily_batta_with_overnight_stay);
+                        frm.set_value('daily_batta_without_overnight_stay', r.message.daily_batta_without_overnight_stay);
+                        frm.set_value('food_allowance', r.message.food_allowance);
+                    }
+                }
+            });
+        }
     }
 });
 
@@ -23,10 +148,14 @@ frappe.ui.form.on('Work Detail', {
     },
     to_date_and_time: function (frm, cdt, cdn) {
         validate_dates_and_calculate(frm, cdt, cdn);
+    },
+    origin: function(frm) {
+        update_work_detail(frm);
+    },
+    destination: function(frm) {
+        update_work_detail(frm);
     }
 });
-
-
 
 /* Function to set options for Batta Based On field based on Batta Type */
 function set_batta_based_on_options(frm) {
@@ -34,9 +163,28 @@ function set_batta_based_on_options(frm) {
         frm.set_df_property('batta_based_on', 'options', 'Hours');
         frm.set_value('batta_based_on', 'Hours');
     } else {
-        frm.set_df_property('batta_based_on', 'options', ['Daily', 'Hours']);
+        frm.set_df_property('batta_based_on', 'options', ['Daily']);
+        frm.set_value('batta_based_on', 'Daily');
     }
 }
+
+/* Function to handle designation field based on batta_type */
+function handle_designation_based_on_batta_type(frm) {
+    if (frm.doc.batta_type === 'Internal' && frm.doc.employee) {
+        // Fetch and set designation when batta_type is Internal
+        designation = frappe.db.get_value('Employee', frm.doc.employee, 'designation', function (r) {
+            if (r && r.designation) {
+                frm.set_value('designation', r.designation);
+            } else {
+                frappe.msgprint(__('Designation not found for the selected employee.'));
+            }
+        });
+        // Clear designation for External
+    } else if (frm.doc.batta_type === 'External') {
+        frm.set_value('designation', '');
+    }
+}
+
 
 /* Function to validate dates and perform calculations */
 function validate_dates_and_calculate(frm, cdt, cdn) {
@@ -67,7 +215,7 @@ function calculate_hours_and_totals(frm, cdt, cdn) {
 
         if (diff >= 0) {
             frappe.db.get_single_value('Beams Accounts Settings', 'default_working_hours')
-                .then(default_working_hours => {
+              .then(default_working_hours => {
                     row.total_hours = diff;
                     row.ot_hours = diff > default_working_hours ? diff - default_working_hours : 0;
 
@@ -75,7 +223,6 @@ function calculate_hours_and_totals(frm, cdt, cdn) {
                         row.number_of_days = Math.ceil(row.total_hours / 24);
                         row.daily_batta = row.number_of_days * frm.doc.batta;
                     } else if (frm.doc.batta_based_on === 'Hours') {
-                        // row.number_of_days = 1;
                         row.daily_batta = (row.total_hours - row.ot_hours) * frm.doc.batta;
                     }
 
@@ -90,21 +237,83 @@ function calculate_hours_and_totals(frm, cdt, cdn) {
 
 /* Function to calculate total batta values */
 function calculate_totals(frm) {
-    let total_daily_batta = 0;
-    let total_ot_batta = 0;
+    frm.call({
+        method: "calculate_total_batta",
+        doc: frm.doc,
+        callback: function(response) {
+            // Update the form fields with the calculated totals
+            frm.set_value({
+                'total_daily_batta': response.message.total_daily_batta,
+                'total_ot_batta': response.message.total_ot_batta,
+                'total_driver_batta': response.message.total_driver_batta
+            });
 
-    (frm.doc.work_detail || []).forEach(row => {
-        total_daily_batta += row.daily_batta || 0;
-        total_ot_batta += row.ot_batta || 0;
+            // Refresh the fields to update totals
+            frm.refresh_field(['total_daily_batta', 'total_ot_batta', 'total_driver_batta']);
+        }
+    });
+}
+
+/* Function to calculate batta values */
+function calculate_batta_totals(frm) {
+    frm.call({
+        method: "calculate_batta",  // Replace with actual path to the Python function
+        doc: frm.doc,
+        callback: function(response) {
+            // Update the form fields with the calculated totals from the Python method
+            frm.set_value({
+                'room_rent_batta': response.message.room_rent_batta,
+                'daily_batta_with_overnight_stay': response.message.daily_batta_with_overnight_stay,
+                'daily_batta_without_overnight_stay': response.message.daily_batta_without_overnight_stay,
+                'food_allowance': response.message.food_allowance,
+                'batta': response.message.batta  // Assuming 'batta' is the total batta field
+            });
+
+            // Refresh the fields to display updated totals
+            frm.refresh_field(['room_rent_batta', 'daily_batta_with_overnight_stay', 'daily_batta_without_overnight_stay', 'food_allowance', 'batta']);
+        }
+    });
+}
+
+
+frappe.ui.form.on('Work Detail', {
+    distance_travelled_km: function(frm, cdt, cdn) {
+        calculate_total_distance_travelled(frm);
+    },
+
+    work_detail_add: function(frm, cdt, cdn) {
+        const { origin, destination } = frm.doc;
+
+           // Set initial values for the new row
+        frappe.model.set_value(cdt, cdn, 'origin', origin);
+        frappe.model.set_value(cdt, cdn, 'destination', destination);
+    }
+});
+
+function calculate_total_distance_travelled(frm) {
+    let totalDistance = 0;
+       // Sum all distance_travelled_km from the Work Detail child table
+    frm.doc.work_detail.forEach(function(row) {
+        if (row.distance_travelled_km) {
+            totalDistance += row.distance_travelled_km;
+        }
+    });
+       // Set the total_distance_travelled_km field with the calculated sum
+    frm.set_value('total_distance_travelled_km', totalDistance);
+}
+
+function update_work_detail(frm) {
+    const { origin, destination, work_detail } = frm.doc;
+
+    // Update existing child rows with parent values
+    work_detail.forEach((row, index) => {
+        if (index >= 0) {
+            if (!row.origin || !row.destination) {
+                frappe.model.set_value(row.doctype, row.name, 'origin', origin);
+                frappe.model.set_value(row.doctype, row.name, 'destination', destination);
+            }
+        }
     });
 
-    let total_driver_batta = total_daily_batta + total_ot_batta;
-
-    frm.set_value({
-        'total_daily_batta': total_daily_batta,
-        'total_ot_batta': total_ot_batta,
-        'total_driver_batta': total_driver_batta
-    });
-
-    frm.refresh_field(['total_daily_batta', 'total_ot_batta', 'total_driver_batta']);
+    frm.refresh_field('work_detail');
 }

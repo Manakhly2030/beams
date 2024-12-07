@@ -17,6 +17,13 @@ app_license = "mit"
 # web_include_css = "/assets/beams/css/beams.css"
 # web_include_js = "/assets/beams/js/beams.js"
 
+# website_generators = ["Job Application"]
+
+# website_route_rules = [
+#     {"from_route": "/job_application/new", "to_route": "job_application"}
+# ]
+
+
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "beams/public/scss/website"
 
@@ -29,13 +36,32 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-    "Sales Invoice": "public/js/sales_invoice.js",
-    "Quotation": "public/js/quotation.js",
-    "Purchase Invoice": "public/js/purchase_invoice.js",
-    "Driver":"public/js/driver.js",
-    "Sales Order": "public/js/sales_order.js"
+    "Sales Invoice": "beams/custom_scripts/sales_invoice/sales_invoice.js",
+    "Quotation": "beams/custom_scripts/quotation/quotation.js",
+    "Purchase Invoice": "beams/custom_scripts/purchase_invoice/purchase_invoice.js",
+    "Driver":"beams/custom_scripts/driver/driver.js",
+    "Sales Order": "beams/custom_scripts/sales_order/sales_order.js",
+    "Voucher Entry": "beams/custom_scripts/voucher_entry/voucher_entry.js",
+    "Contract":"beams/custom_scripts/contract/contract.js",
+    "Department":"beams/custom_scripts/department/department.js",
+    "Job Requisition":"beams/custom_scripts/job_requisition/job_requisition.js",
+    "Job Applicant" :"beams/custom_scripts/job_applicant/job_applicant.js",
+    "Budget":"beams/custom_scripts/budget/budget.js",
+    "Interview Feedback":"beams/custom_scripts/interview_feedback/interview_feedback.js",
+    "Interview":"beams/custom_scripts/interview/interview.js",
+    "Employee":"beams/custom_scripts/employee/employee.js",
+    "Event":"beams/custom_scripts/event/event.js",
+    "Training Event":"beams/custom_scripts/training_event/training_event.js",
+    "Employee Onboarding":"beams/custom_scripts/employee_onboarding/employee_onboarding.js",
+    "Leave Application":"beams/custom_scripts/leave_application/leave_application.js",
+    "Job Offer": "beams/custom_scripts/job_offer/job_offer.js"
+
 }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Sales Invoice" : "beams/custom_scripts/sales_invoice/sales_invoice_list.js",
+    "Purchase Invoice":"beams/custom_scripts/purchase_invoice/purchase_invoice_list.js",
+    "Job Applicant":"beams/custom_scripts/job_applicant/job_applicant_list.js"
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -52,7 +78,7 @@ doctype_js = {
 
 # website user home page (by Role)
 # role_home_page = {
-# 	"Role": "home_page"
+# "Role": "home_page"
 # }
 
 # Generators
@@ -66,8 +92,8 @@ doctype_js = {
 
 # add methods and filters to jinja environment
 # jinja = {
-# 	"methods": "beams.utils.jinja_methods",
-# 	"filters": "beams.utils.jinja_filters"
+# "methods": "beams.utils.jinja_methods",
+# "filters": "beams.utils.jinja_filters"
 # }
 
 # Installation
@@ -79,7 +105,7 @@ after_migrate = "beams.setup.after_migrate"
 # Uninstallation
 # ------------
 
-before_uninstall = "beams.uninstall.before_uninstall"
+before_uninstall = "beams.setup.before_uninstall"
 # after_uninstall = "beams.uninstall.after_uninstall"
 
 # Integration Setup
@@ -108,20 +134,22 @@ before_uninstall = "beams.uninstall.before_uninstall"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
+permission_query_conditions = {
+"Job Applicant": "beams.beams.custom_scripts.job_applicant.job_applicant.get_permission_query_conditions",
+}
+
 # has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
+#
 # }
 
 # DocType Class
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# "ToDo": "custom_app.overrides.CustomToDo"# }
+override_doctype_class = {
+    "Attendance Request": "beams.beams.custom_scripts.attendance_request.attendance_request.AttendanceRequestOverride",
+    "Shift Type": "beams.beams.custom_scripts.shift_type.shift_type.ShiftTypeOverride"
+}
 
 # Document Events
 # ---------------
@@ -129,16 +157,14 @@ before_uninstall = "beams.uninstall.before_uninstall"
 
 doc_events = {
     "Sales Invoice": {
-        "before_save": "beams.beams.custom_scripts.sales_invoice.sales_invoice.validate_sales_invoice_amount_with_quotation",
-        "on_submit":  "beams.beams.custom_scripts.sales_invoice.sales_invoice.send_email_to_party",
-        "autoname": "beams.beams.custom_scripts.sales_invoice.sales_invoice.autoname"
-
+        "on_update_after_submit":"beams.beams.custom_scripts.sales_invoice.sales_invoice.on_update_after_submit",
+        "autoname": "beams.beams.custom_scripts.sales_invoice.sales_invoice.autoname",
+        "validate": "beams.beams.custom_scripts.sales_invoice.sales_invoice.validate_sales_invoice_for_barter"
     },
     "Quotation": {
         "validate": "beams.beams.custom_scripts.quotation.quotation.validate_is_barter",
         "on_submit": "beams.beams.custom_scripts.quotation.quotation.create_tasks_for_production_items",
         "autoname": "beams.beams.custom_scripts.quotation.quotation.autoname"
-
     },
     "Purchase Invoice": {
         "before_save": "beams.beams.custom_scripts.purchase_invoice.purchase_invoice.before_save"
@@ -149,43 +175,121 @@ doc_events = {
     "Customer": {
         "after_insert": "beams.beams.custom_scripts.account.account.create_todo_on_creation_for_customer"
     },
+    "Training Event": {
+         "on_update": "beams.beams.custom_scripts.training_event.training_event.on_update",
+          "on_update_after_submit": "beams.beams.custom_scripts.training_event.training_event.on_update",
+          "on_cancel": "beams.beams.custom_scripts.training_event.training_event.on_cancel"
+    },
     "Supplier": {
         "after_insert": "beams.beams.custom_scripts.account.account.create_todo_on_creation_for_supplier"
     },
     "Purchase Order": {
         "on_update": "beams.beams.custom_scripts.purchase_order.purchase_order.create_todo_on_finance_verification",
         "after_insert": "beams.beams.custom_scripts.purchase_order.purchase_order.create_todo_on_purchase_order_creation",
-        "before_save": "beams.beams.custom_scripts.purchase_order.purchase_order.validate_budget"
+        "before_save": "beams.beams.custom_scripts.purchase_order.purchase_order.validate_budget",
+        "validate": "beams.beams.custom_scripts.purchase_order.purchase_order.fetch_department_from_cost_center"
     },
     "Material Request":{
-        "before_save":"beams.beams.custom_scripts.purchase_order.purchase_order.validate_budget"
+        "before_save":"beams.beams.custom_scripts.purchase_order.purchase_order.validate_budget",
+        "validate":"beams.beams.custom_scripts.purchase_order.purchase_order.fetch_department_from_cost_center"
     },
     "Sales Order": {
-        "autoname": "beams.beams.custom_scripts.sales_order.sales_order.autoname"
-        }
+        "autoname": "beams.beams.custom_scripts.sales_order.sales_order.autoname",
+        "before_save": "beams.beams.custom_scripts.sales_order.sales_order.validate_sales_order_amount_with_quotation",
+        "before_insert": "beams.beams.custom_scripts.sales_order.sales_order.set_region_from_quotation"
+    },
+    "Contract": {
+        "on_update": "beams.beams.custom_scripts.contract.contract.create_todo_on_contract_verified_by_finance",
+        "after_insert": "beams.beams.custom_scripts.contract.contract.create_todo_on_contract_creation",
+        "on_submit":"beams.beams.custom_scripts.contract.contract.on_submit"
+    },
+    "Batta Claim": {
+        "onchange": "beams.beams.doctype.batta_claim.batta_claim.calculate_batta_allowance",
+        "onchange": "beams.beams.doctype.batta_claim.batta_claim.calculate_batta"
+    },
+    "Job Requisition": {
+        "on_update": [
+            "beams.beams.custom_scripts.job_requisition.job_requisition.create_job_opening_from_job_requisition",
+            "beams.beams.custom_scripts.job_requisition.job_requisition.on_update"
+        ]
+    },
+    "Journal Entry": {
+        "on_cancel": "beams.beams.custom_scripts.journal_entry.journal_entry.on_cancel"
+    },
+    "Job Applicant": {
+        "validate": [
+            "beams.beams.custom_scripts.job_applicant.job_applicant.validate",
+            "beams.beams.custom_scripts.job_applicant.job_applicant.validate_unique_application",
+            "beams.beams.custom_scripts.job_applicant.job_applicant.fetch_designation",
+            "beams.beams.custom_scripts.job_applicant.job_applicant.fetch_department"
+            ],
+        "after_insert":"beams.beams.custom_scripts.job_applicant.job_applicant.set_interview_rounds"
+    },
+    "Department": {
+       "validate": "beams.beams.custom_scripts.department.department.validate"
+    },
+    "Interview": {
+        "on_submit": "beams.beams.custom_scripts.interview.interview.mark_interview_completed",
+        "after_insert": "beams.beams.custom_scripts.interview.interview.on_interview_creation",
+        "on_update": "beams.beams.custom_scripts.interview.interview.update_applicant_interview_round"
+    },
+    "Interview Feedback": {
+        "after_insert": "beams.beams.custom_scripts.interview_feedback.interview_feedback.after_insert",
+        "validate": "beams.beams.custom_scripts.interview_feedback.interview_feedback.validate"
+    },
+    "Employee Checkin":{
+        "after_insert":"beams.beams.custom_scripts.employee_checkin.employee_checkin.handle_employee_checkin_out"
+    },
+    "Leave Allocation":{
+        "on_submit":"beams.beams.custom_scripts.leave_allocation.leave_allocation.create_new_compensatory_leave_log",
+        "on_update_after_submit":"beams.beams.custom_scripts.leave_allocation.leave_allocation.create_new_log_on_update",
+        "validate": "beams.beams.custom_scripts.leave_allocation.leave_allocation.validate"
+
+    },
+    "Leave Application" : {
+        "validate":[
+            "beams.beams.custom_scripts.leave_application.leave_application.validate_leave_type",
+            "beams.beams.custom_scripts.leave_application.leave_application.validate_sick_leave",
+            "beams.beams.custom_scripts.leave_application.leave_application.validate_leave_application",
+         ]
+    },
+    "Employee" : {
+        "after_insert": "beams.beams.custom_scripts.employee.employee.after_insert_employee"
+    },
+    "Job Offer" : {
+        "on_submit":"beams.beams.custom_scripts.job_offer.job_offer.make_employee"
+    }
 }
 
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"beams.tasks.all"
-# 	],
-# 	"daily": [
-# 		"beams.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"beams.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"beams.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"beams.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    "daily": [
+        "beams.beams.doctype.local_enquiry_report.local_enquiry_report.set_status_to_overdue",
+        "beams.beams.custom_scripts.attendance.attendance.send_absence_reminder",
+        "beams.beams.custom_scripts.attendance.attendance.send_absent_reminder",
+        "beams.beams.doctype.compensatory_leave_log.compensatory_leave_log.expire_leave_allocation",
+        "beams.beams.doctype.beams_hr_settings.beams_hr_settings.send_shift_publication_notifications"
+
+    ],
+# "all": [
+# "beams.tasks.all"
+# ],
+# "daily": [
+# "beams.tasks.daily"
+# ],
+# "hourly": [
+# "beams.tasks.hourly"
+# ],
+# "weekly": [
+# "beams.tasks.weekly"
+# ],
+# "monthly": [
+# "beams.tasks.monthly"
+# ],
+  }
 
 # Testing
 # -------
@@ -196,15 +300,20 @@ doc_events = {
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "beams.event.get_events"
+# "frappe.desk.doctype.event.event.get_events": "beams.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "beams.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+'Item': 'beams.beams.custom_scripts.item_dashboard.item_dashboard.get_data',
+    'Customer': 'beams.beams.custom_scripts.customer_dashboard.customer_dashboard.get_data',
+    'Sales Invoice': 'beams.beams.custom_scripts.sales_invoice_dashboard.sales_invoice_dashboard.get_data',
+    'Sales Order': 'beams.beams.custom_scripts.sales_order_dashboard.sales_order_dashboard.get_data',
+    'Employee':'beams.beams.custom_scripts.employee_dashboard.employee_dashboard.get_data',
+    'Job Applicant': 'beams.beams.custom_scripts.job_applicant.job_applicant_dashboard.get_data'
+}
 
 # exempt linked doctypes from being automatically cancelled
 #
@@ -229,50 +338,47 @@ doc_events = {
 # --------------------
 
 # user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
+# {
+# "doctype": "{doctype_1}",
+# "filter_by": "{filter_by}",
+# "redact_fields": ["{field_1}", "{field_2}"],
+# "partial": 1,
+# },
+# {
+# "doctype": "{doctype_2}",
+# "filter_by": "{filter_by}",
+# "partial": 1,
+# },
+# {
+# "doctype": "{doctype_3}",
+# "strict": False,
+# },
+# {
+# "doctype": "{doctype_4}"
+# }
 # ]
 
 # Authentication and authorization
 # --------------------------------
 
 # auth_hooks = [
-# 	"beams.auth.validate"
+# "beams.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
 # default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
+# "Logging DocType Name": 30  # days to retain logs
 # }
 fixtures = [
     {"dt": "Workflow", "filters": [
-        ["name", "in", ["Customer Approval", "Account Approval", "Adhoc Budget","Supplier Approval", "Purchase Order Approval" , "Budget Approval" , "Batta Claim Approval","Purchase Invoice Workflow","Sales Invoice Approval","Stringer Bill Approval","Material Request Approval"]]
+        ["name", "in", ["Customer Approval", "Account Approval", "Adhoc Budget","Supplier Approval", "Purchase Order Approval" , "Budget Approval" , "Batta Claim Approval","Purchase Invoice Workflow","Sales Invoice Approval","Stringer Bill Approval","Material Request Approval","Substitute Booking","Contract","Job Requisition Workflow","Enquiry Workflow","Job Proposal Workflow","Maternity Leave Request", "Shift Swap Request"]]
     ]},
     {"dt": "Workflow State", "filters": [
-        ["name", "in", ["Draft", "Pending Approval", "Approved", "Rejected", "Pending Finance Verification", "Verified By Finance","Rejected By Finance", "Pending Finance Approval", "Approved by Finance","Submitted","Cancelled","Completed"]]
+        ["name", "in", ["Draft", "Pending Approval", "Approved", "Rejected", "Pending Finance Verification", "Verified By Finance","Rejected By Finance", "Pending Finance Approval", "Approved by Finance","Submitted","Cancelled","Completed","On Hold","Assigned to Enquiry Officer","Assigned to Admin","Enquiry on Progress","Applicant Accepted","Applicant Rejected","Pending HOD Approval","Pending HR Approval"]]
     ]},
     {"dt": "Workflow Action Master", "filters": [
-        ["name", "in", ["Submit for Approval","Reopen", "Approve", "Reject", "Send For Finance Verification", "Verify", "Send for Approval","Submit","Cancel","Send Email To Party"]]
-    ]},
-    {"dt": "Role", "filters": [
-        ["name", "in", ["CEO","Production Manager"]]
-        ]}
+        ["name", "in", ["Submit for Approval","Reopen", "Approve", "Reject", "Send For Finance Verification", "Verify", "Send for Approval","Submit","Cancel","Send Email To Party","Put On Hold","Assign to Admin","Assign to Enquiry Officer","Start Enquiry","Enquiry Completed","Accept", "Request for Approval"]]
+    ]}
 ]

@@ -3,6 +3,9 @@
 
 import frappe
 from frappe.model.document import Document
+from datetime import datetime
+from frappe.desk.form.assign_to import add as add_assign
+from frappe.utils.user import get_users_with_role
 
 class StringerBill(Document):
     def on_submit(self):
@@ -14,26 +17,51 @@ class StringerBill(Document):
         Creation of Purchase Invoice On The Approval Of the Stringer Bill.
         """
         # Fetch the item code from the Stringer Type
-        item_code = frappe.get_value("Stringer Type", self.stringer_type, "item")
+        item_code = frappe.db.get_single_value('Beams Accounts Settings', 'stringer_service_item')
 
         if not item_code:
             frappe.throw(f"No item found for Stringer Type: {self.stringer_type}")
             return
 
+
+
         # Create a new Purchase Invoice
         purchase_invoice = frappe.new_doc('Purchase Invoice')
+        purchase_invoice.stringer_bill_reference = self.name
         purchase_invoice.supplier = self.supplier
         purchase_invoice.invoice_type = 'Stringer Bill'  # Set invoice type to "Stringer Bill"
         purchase_invoice.posting_date = frappe.utils.nowdate()
 
-		# Populate Child Table
+        purchase_invoice.bureau = self.bureau
+        purchase_invoice.cost_center = self.cost_center
+
+        # Populate Child Table
         purchase_invoice.append('items', {
             'item_code': item_code,
             'qty': 1,
-            'rate': self.total_wage
+            'rate': self.daily_wage
         })
 
+        # Insert and submit the document
         purchase_invoice.insert()
         purchase_invoice.submit()
 
-        frappe.msgprint(f"Purchase Invoice {purchase_invoice.name} created successfully.",alert=True,indicator="green")
+        # Confirm success
+        frappe.msgprint(f"Purchase Invoice {purchase_invoice.name} created successfully with Stringer Bill reference {self.name}.", alert=True, indicator="green")
+
+    def after_insert(self):
+            self.create_todo_on_creation_for_stringer_bill()
+
+    def create_todo_on_creation_for_stringer_bill(self):
+            """
+            Create a ToDo for Accounts Manager when a new Stringer Bill is created.
+            """
+            users = get_users_with_role("Accounts Manager")
+            if users:
+                description = f"New Stringer Bill Created for {self.supplier}.<br>Please Review and Update Details or Take Necessary Actions."
+                add_assign({
+                    "assign_to": users,
+                    "doctype": "Stringer Bill",
+                    "name": self.name,
+                    "description": description
+                })

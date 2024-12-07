@@ -3,6 +3,15 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
+  "modified": "2024-11-25 11:52:51.695037",
+  "name": "Pending HOD Approval",
+  "style": "",
+  "workflow_state_name": "Pending HOD Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
   "modified": "2024-08-21 10:32:58.704051",
   "name": "Pending Finance Verification",
   "style": "Info",
@@ -16,15 +25,6 @@
   "name": "Verified By Finance",
   "style": "Primary",
   "workflow_state_name": "Verified By Finance"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-08-27 12:10:51.168269",
-  "name": "Cancelled",
-  "style": "Danger",
-  "workflow_state_name": "Cancelled"
  },
  {
   "docstatus": 0,
@@ -65,6 +65,87 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-08-22 09:42:18.336199",
+  "name": "Pending Finance Approval",
+  "style": "Info",
+  "workflow_state_name": "Pending Finance Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-10-02 11:07:13.425158",
+  "name": "On Hold",
+  "style": "",
+  "workflow_state_name": "On Hold"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-08-27 12:10:51.168269",
+  "name": "Cancelled",
+  "style": "Danger",
+  "workflow_state_name": "Cancelled"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-05 12:11:26.754828",
+  "name": "Applicant Accepted",
+  "style": "",
+  "workflow_state_name": "Applicant Accepted"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-14 12:12:19.950288",
+  "name": "Applicant Rejected",
+  "style": "",
+  "workflow_state_name": "Applicant Rejected"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-10-21 13:14:39.863524",
+  "name": "Assigned to Enquiry Officer",
+  "style": "Primary",
+  "workflow_state_name": "Assigned to Enquiry Officer"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-10-21 13:17:58.686673",
+  "name": "Assigned to Admin",
+  "style": "Info",
+  "workflow_state_name": "Assigned to Admin"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-10-21 13:18:10.724909",
+  "name": "Enquiry on Progress",
+  "style": "Success",
+  "workflow_state_name": "Enquiry on Progress"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-28 11:16:33.546485",
+  "name": "Pending HR Approval",
+  "style": "",
+  "workflow_state_name": "Pending HR Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
   "icon": "remove",
   "modified": "2024-08-03 14:59:52.136137",
   "name": "Rejected",
@@ -74,11 +155,11 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-08-22 09:42:18.336199",
-  "name": "Pending Finance Approval",
-  "style": "Info",
-  "workflow_state_name": "Pending Finance Approval"
+  "icon": "ok-sign",
+  "modified": "2024-08-03 14:59:52.132982",
+  "name": "Approved",
+  "style": "Success",
+  "workflow_state_name": "Approved"
  },
  {
   "docstatus": 0,
@@ -97,14 +178,5 @@
   "name": "Pending Approval",
   "style": "Info",
   "workflow_state_name": "Pending Approval"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "ok-sign",
-  "modified": "2024-08-03 14:59:52.132982",
-  "name": "Approved",
-  "style": "Success",
-  "workflow_state_name": "Approved"
  }
 ]
